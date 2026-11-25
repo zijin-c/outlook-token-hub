@@ -23,7 +23,17 @@
 
 ## 快速部署
 
-### 方式一：Docker Compose 一键部署（推荐服务器使用）
+### 方式一：Linux 服务器一键部署（无需 Docker，自动安装环境 + 开机自启）
+
+在 Debian / Ubuntu / CentOS 服务器上直接执行这一条命令即可（重复执行可无损更新）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zijin-c/outlook-token-hub/main/install.sh | bash
+```
+
+部署完成后直接访问 `http://你的服务器IP:18742`，首次打开网页设置管理员账号密码即可。
+
+### 方式二：Docker Compose 部署
 
 ```bash
 git clone https://github.com/zijin-c/outlook-token-hub.git
@@ -45,7 +55,7 @@ environment:
 
 所有数据均持久化挂载在宿主机的 `./data/db.json`，重建容器或升级镜像不会丢失任何邮箱与最新令牌。
 
-### 方式二：本地 Node.js 运行（需要 Node.js 18+）
+### 方式三：本地 Node.js 运行（需要 Node.js 18+）
 
 ```bash
 npm install
