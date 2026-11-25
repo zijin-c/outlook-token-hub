@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outlook Hub · 令牌取件与项目分组管理</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --rail-bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-subtle: #f9fafb;
+      --hover: #f2f4f7;
+      --active-bg: #eef4ff;
+      --active-text: #1d4ed8;
+      --border: #eaecf0;
+      --border-strong: #d0d5dd;
+      --text: #101828;
+      --text-secondary: #475467;
+      --text-muted: #98a2b3;
+      --ink-btn: #111827;
+      --ink-btn-hover: #1f2937;
+      --ink-btn-text: #ffffff;
+      --primary: #2563eb;
+      --success: #059669;
+      --success-bg: #ecfdf5;
+      --success-border: #a7f3d0;
+      --warn: #d97706;
+      --warn-bg: #fffbeb;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --shadow-md: 0 12px 32px rgba(16, 24, 40, 0.12), 0 2px 6px rgba(16, 24, 40, 0.04);
+      --radius: 10px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0c0d10;
+      --rail-bg: #111318;
+      --surface: #14161c;
+      --surface-subtle: #181b22;
+      --hover: #1e222b;
+      --active-bg: rgba(59, 130, 246, 0.14);
+      --active-text: #60a5fa;
+      --border: #232732;
+      --border-strong: #323846;
+      --text: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --ink-btn: #f3f4f6;
+      --ink-btn-hover: #ffffff;
+      --ink-btn-text: #111827;
+      --primary: #3b82f6;
+      --success: #34d399;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --success-border: rgba(16, 185, 129, 0.3);
+      --warn: #fbbf24;
+      --warn-bg: rgba(245, 158, 11, 0.12);
+      --danger: #f87171;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --shadow-md: 0 20px 50px rgba(0, 0, 0, 0.55);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      grid-template-columns: 232px 300px 1fr;
+      overflow: hidden;
+      font-size: 13.5px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+    /* Shared icons & buttons */
+    svg { display: block; flex-shrink: 0; }
+    button { font-family: inherit; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.14s, border-color 0.14s, opacity 0.14s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--hover); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ink {
+      background: var(--ink-btn);
+      border-color: var(--ink-btn);
+      color: var(--ink-btn-text);
+    }
+    .btn-ink:hover { background: var(--ink-btn-hover); }
+    .btn-sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 7px; }
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .icon-btn:hover { background: var(--hover); color: var(--text); }
+    .icon-btn.danger:hover { background: var(--danger-bg); color: var(--danger); }
+
+    /* 1. Left Navigation Rail */
+    .rail {
+      background: var(--rail-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 14px 10px 12px;
+      user-select: none;
+    }
+    .rail-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 2px 8px 14px;
+    }
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--ink-btn);
+      color: var(--ink-btn-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-name { font-size: 14.5px; font-weight: 700; letter-spacing: -0.2px; }
+    .import-cta {
+      width: 100%;
+      margin-bottom: 14px;
+      height: 36px;
+      border-radius: 9px;
+    }
+
+    .rail-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+    .rail-section {
+      margin-top: 14px;
+      margin-bottom: 5px;
+      padding: 0 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .rail-section:first-child { margin-top: 2px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+      margin-bottom: 2px;
+      position: relative;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--text); }
+    .nav-item.active { background: var(--active-bg); color: var(--active-text); font-weight: 600; }
+    .nav-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nav-count {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .nav-item.active .nav-count { color: var(--active-text); }
+    .group-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .nav-hover-acts {
+      display: none;
+      align-items: center;
+      gap: 2px;
+    }
+    .nav-item:hover .nav-hover-acts { display: flex; }
+    .nav-item:hover .nav-count.hide-on-hover { display: none; }
+    .mini-act {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .mini-act:hover { background: var(--border); color: var(--text); }
+
+    .rail-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    /* 2. Account Column */
+    .col {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-height: 0;
+      background: var(--surface);
+    }
+    .col:last-child { border-right: none; }
+
+    .col-top {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .col-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .col-heading {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+    .col-heading span.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill-count {
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 99px;
+      background: var(--hover);
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 10px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-wrap input {
+      width: 100%;
+      height: 33px;
+      padding: 0 10px 0 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-subtle);
+      color: var(--text);
+      font-size: 12.5px;
+      outline: none;
+      transition: border-color 0.14s, background 0.14s;
+    }
+    .search-wrap input:focus {
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    .list-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+
+    /* Account Row (clean flat list) */
+    .acc-row {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+      position: relative;
+    }
+    .acc-row:hover { background: var(--hover); }
+    .acc-row.active {
+      background: var(--active-bg);
+    }
+    .acc-row.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--primary);
+    }
+    .acc-line1 {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .dot-status {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-status.active { background: var(--success); }
+    .dot-status.error { background: var(--danger); }
+    .dot-status.pending { background: var(--warn); }
+    .acc-email {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .days-tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 1px 6px;
+      border-radius: 5px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .days-tag.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+    .days-tag.err { background: var(--danger-bg); color: var(--danger); border-color: transparent; }
+
+    .acc-line2 {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      min-height: 22px;
+    }
+    .acc-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+    .group-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 99px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .note-text {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .acc-quick {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+    .acc-row:hover .acc-quick,
+    .acc-row.active .acc-quick { opacity: 1; }
+
+    /* 3. Unified Mail Workspace (List <-> Detail) */
+    .mail-workspace {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg);
+    }
+    .mail-view {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+    .mail-head {
+      padding: 14px 24px 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+    .mail-head-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .mail-account-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .mail-account-title:hover { color: var(--primary); }
+    .tabs {
+      display: flex;
+      gap: 20px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 7px 2px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.14s, border-color 0.14s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--text);
+      font-weight: 600;
+      border-bottom-color: var(--primary);
+    }
+
+    .mail-row {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .mail-row:hover { background: var(--hover); }
+    .mail-row-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .mail-row-main { flex: 1; min-width: 0; }
+    .mail-r1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 3px;
+    }
+    .mail-sender {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mail-time {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .mail-r2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .mail-subj {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .otp-pill {
+      font-size: 11.5px;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      padding: 1px 8px;
+      border-radius: 99px;
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid var(--success-border);
+      flex-shrink: 0;
+    }
+    .mail-snip {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Mail Detail View */
+    .detail-toolbar {
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .detail-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .detail-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .reader-top {
+      padding: 20px 28px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .reader-subject-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .reader-subject {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.35;
+    }
+    .mode-switch {
+      display: inline-flex;
+      padding: 2px;
+      border-radius: 8px;
+      background: var(--hover);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .mode-switch button {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .mode-switch button.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+    .reader-meta {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+    }
+    .sender-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--hover);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .otp-card {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .otp-num {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--success);
+    }
+    .reader-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface-subtle);
+      padding: 18px 24px;
+    }
+    .iframe-card {
+      flex: 1;
+      min-height: 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #ffffff;
+      overflow: hidden;
+    }
+    .iframe-card iframe { width: 100%; height: 100%; border: none; background: #fff; }
+    .plain-card {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 20px 22px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .empty {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 32px 20px;
+      color: var(--text-muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    /* Modals */
+    .mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.42);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      padding: 16px;
+    }
+    .mask.open { display: flex; }
+    .dialog {
+      width: min(560px, 100%);
+      max-height: 88vh;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .dialog.wide { width: min(680px, 100%); }
+    .dialog-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .dialog-body { padding: 18px 20px; overflow-y: auto; }
+    .dialog-foot {
+      padding: 13px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .input, select.input, textarea.input {
+      width: 100%;
+      padding: 8px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+    .input:focus { border-color: var(--primary); }
+    textarea.input {
+      min-height: 155px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.12s;
+    }
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+
+    .note-box {
+      padding: 11px 14px;
+      border-radius: 9px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .log-list {
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+    .log-item {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+    }
+    .log-item:last-child { border-bottom: none; }
+
+    .spin { animation: spin 0.85s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink-btn);
+      color: var(--ink-btn-text);
+      padding: 9px 16px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      display: none;
+      z-index: 120;
+    }
+
+    /* Full-screen Login / Setup Overlay */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--rail-bg);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-overlay.open { display: flex; }
+    .auth-card {
+      width: min(390px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 26px 24px;
+      box-shadow: var(--shadow-md);
+    }
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .auth-title { font-size: 18px; font-weight: 700; margin: 0 0 6px; }
+    .auth-sub { font-size: 12.5px; color: var(--text-secondary); margin: 0 0 20px; line-height: 1.5; }
+    .auth-err {
+      margin-bottom: 14px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-size: 12.5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- 1. Left Navigation Rail -->
+  <aside class="rail">
+    <div class="rail-brand">
+      <div class="brand-mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="2" y="4" width="20" height="16" rx="3"/>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+        </svg>
+      </div>
+      <span class="brand-name">Outlook Hub</span>
+    </div>
+
+    <button class="btn btn-ink import-cta" onclick="openImportModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+      导入邮箱
+    </button>
+
+    <div class="rail-scroll">
+      <div class="rail-section">视图</div>
+      <div class="nav-item active" id="nav-all" onclick="selectGroupFilter('all')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span class="nav-label">全部邮箱</span>
+        <span class="nav-count" id="cnt-all">0</span>
+      </div>
+      <div class="nav-item" id="nav-error" onclick="selectGroupFilter('error')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="nav-label">异常令牌</span>
+        <span class="nav-count" id="cnt-error">0</span>
+      </div>
+      <div class="nav-item" id="nav-ungrouped" onclick="selectGroupFilter('__ungrouped__')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="nav-label">未分组</span>
+        <span class="nav-count" id="cnt-ungrouped">0</span>
+      </div>
+
+      <div class="rail-section">
+        <span>项目分组</span>
+        <button class="mini-act" onclick="openGroupModal()" title="新建项目分组">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div id="groupNavList"></div>
+    </div>
+
+    <div class="rail-footer">
+      <div class="nav-item" onclick="openExportModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="nav-label">导出最新凭证</span>
+      </div>
+      <div class="nav-item" onclick="openSchedulerModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="nav-label" id="railSchedLabel">自动保活 · 45天</span>
+      </div>
+      <div class="nav-item" id="refreshAllNav" onclick="refreshAllTokens()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+        <span class="nav-label">立即刷新全部</span>
+      </div>
+      <div class="nav-item" onclick="toggleTheme()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span class="nav-label" id="themeLabel">切换深色模式</span>
+      </div>
+      <div class="nav-item" onclick="openAccountSecurityModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span class="nav-label" id="adminUserLabel">账号安全</span>
+      </div>
+      <div class="nav-item" onclick="logout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="nav-label">退出登录</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 2. Account List Column -->
+  <section class="col">
+    <div class="col-top">
+      <div class="col-title-row">
+        <div class="col-heading">
+          <span class="truncate" id="currentGroupTitle">全部邮箱</span>
+          <span class="pill-count" id="shownAccCount">0</span>
+        </div>
+        <button class="icon-btn" onclick="refreshAllData()" title="刷新列表">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+      </div>
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" type="text" placeholder="搜索邮箱或备注..." oninput="renderAccounts()" />
+      </div>
+    </div>
+    <div class="list-scroll" id="accountList"></div>
+  </section>
+
+  <!-- 3. Unified Mail Workspace (List <-> Detail) -->
+  <main class="mail-workspace">
+    <!-- Mail List View (Default) -->
+    <div id="mailListView" class="mail-view">
+      <div class="mail-head">
+        <div class="mail-head-top">
+          <span class="mail-account-title" id="mailAccTitle" onclick="copyText(selectedEmail, '已复制邮箱地址')" title="点击复制邮箱地址">未选择邮箱</span>
+          <button class="btn btn-sm" id="fetchBtn" onclick="fetchCurrentMail()">
+            <svg id="fetchIcon" width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            刷新邮件
+          </button>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-inbox" onclick="switchFolder('inbox')">收件箱</button>
+          <button class="tab-btn" id="tab-junk" onclick="switchFolder('junk')">垃圾箱</button>
+          <button class="tab-btn" id="tab-all" onclick="switchFolder('all')">全部邮件</button>
+        </div>
+      </div>
+      <div class="list-scroll" id="mailList">
+        <div class="empty">选择左侧邮箱后自动免登录取件</div>
+      </div>
+    </div>
+
+    <!-- Mail Detail View (Shown only when clicking a mail) -->
+    <div id="mailDetailView" class="mail-view" style="display:none;">
+      <div class="detail-toolbar">
+        <div class="detail-toolbar-left">
+          <button class="btn btn-sm" onclick="closeMailDetail()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            返回邮件列表
+          </button>
+          <span style="font-size:12px; color:var(--text-muted);" id="detailPosition"></span>
+        </div>
+        <div class="detail-toolbar-right">
+          <button class="icon-btn" id="prevMailBtn" onclick="stepMail(-1)" title="上一封">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+          </button>
+          <button class="icon-btn" id="nextMailBtn" onclick="stepMail(1)" title="下一封">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="mode-switch">
+            <button id="mode-html" class="active" onclick="setReaderMode('html')">网页</button>
+            <button id="mode-text" onclick="setReaderMode('text')">纯文本</button>
+          </div>
+        </div>
+      </div>
+      <div class="reader-top">
+        <div class="reader-subject" id="rSubject"></div>
+        <div class="reader-meta">
+          <div class="sender-avatar" id="rAvatar">M</div>
+          <div style="min-width:0; flex:1;">
+            <div style="font-weight:600; color:var(--text);" id="rFrom"></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              <span id="rDate"></span> · <span id="rProto"></span>
+            </div>
+          </div>
+        </div>
+        <div class="otp-card" id="rOtpCard" style="display:none;">
+          <div>
+            <div style="font-size:11px; font-weight:600; color:var(--success);">自动提取验证码</div>
+            <div class="otp-num" id="rOtpCode"></div>
+          </div>
+          <button class="btn btn-sm" onclick="copyText(currentOtp, '验证码已复制: ' + currentOtp)">复制验证码</button>
+        </div>
+      </div>
+      <div class="reader-body" id="rBody"></div>
+    </div>
+  </main>
+
+  <!-- Modal: Create / Edit Project Group -->
+  <div class="mask" id="groupModal" onclick="maskClose(event, 'groupModal')">
+    <div class="dialog">
+      <div class="dialog-head">
+        <span id="groupModalTitle">新建项目分组</span>
+        <button class="icon-btn" onclick="closeModal('groupModal')">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div class="field">
+          <label>项目 / 分组名称</label>
+          <input class="input" id="groupNameInput" placeholder="例如：Claude 项目、OpenAI、Cursor、AWS..." />
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>标识颜色</label>
+          <div class="swatch-row" id="swatchRow"></div>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" onclick="closeModal('groupModal')">取消</button>
+        <button class="btn btn-ink" onclick="saveGroup()">保存分组</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Account Group & Note -->
+  <div class="mask" id="editAccModal" onclick="maskClose(event, 'editAccModal')">
+    <div class="dialog">
+      <div class="dialog-head">
+        <span>标注项目分组与备注</span>
+        <button class="icon-btn" onclick="closeModal('editAccModal')">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div class="note-box" style="margin-bottom:14px;">
+          邮箱：<strong id="editAccEmail" style="color:var(--text);"></strong>
+        </div>
+        <div class="field">
+          <label>所属项目分组</label>
+          <select class="input" id="editAccGroup"></select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>备注（可选）</label>
+          <input class="input" id="editAccNote" placeholder="例如：主号、已绑卡、测试环境..." />
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" onclick="closeModal('editAccModal')">取消</button>
+        <button class="btn btn-ink" onclick="saveAccountMeta()">保存标注</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Import -->
+  <div class="mask" id="importModal" onclick="maskClose(event, 'importModal')">
+    <div class="dialog wide">
+      <div class="dialog-head">
+        <span>导入邮箱凭证</span>
+        <button class="icon-btn" onclick="closeModal('importModal')">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div class="row-2">
+          <div class="field">
+            <label>直接归入项目分组</label>
+            <select class="input" id="importGroup"></select>
+          </div>
+          <div class="field">
+            <label>批量备注（可选）</label>
+            <input class="input" id="importNote" placeholder="例如：11月批次" />
+          </div>
+        </div>
+        <div class="field">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <label style="margin:0;">账号列表（每行一个：<code>email----password----client_id----refresh_token</code>）</label>
+            <label class="btn btn-sm" style="cursor:pointer;">
+              选择 .txt 文件
+              <input type="file" accept=".txt,.csv" style="display:none;" onchange="loadImportFile(event)" />
+            </label>
+          </div>
+          <textarea class="input" id="importText" oninput="updateImportCount()" placeholder="user@hotmail.com----pass----9e5f94bc-e8a4-4e73-b8be-63364c29d753----M.C536..."></textarea>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:var(--text-secondary);">
+          <label style="display:flex; align-items:center; gap:7px; cursor:pointer;">
+            <input type="checkbox" id="importVerify" checked />
+            导入后立即验证并刷新覆盖最新令牌
+          </label>
+          <span id="importCountHint">待导入 0 行</span>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" onclick="closeModal('importModal')">取消</button>
+        <button class="btn btn-ink" id="importSubmitBtn" onclick="submitImport()">确认导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Export -->
+  <div class="mask" id="exportModal" onclick="maskClose(event, 'exportModal')">
+    <div class="dialog wide">
+      <div class="dialog-head">
+        <span>导出覆盖后的最新凭证</span>
+        <button class="icon-btn" onclick="closeModal('exportModal')">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div class="field">
+          <label>导出范围（按项目分组筛选）</label>
+          <select class="input" id="exportGroup" onchange="loadExportPreview()"></select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>最新凭证预览（<code>email----password----client_id----refresh_token</code>）</label>
+          <textarea class="input" id="exportPreview" readonly style="min-height:200px;"></textarea>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" onclick="closeModal('exportModal')">关闭</button>
+        <button class="btn" onclick="copyText(document.getElementById('exportPreview').value, '已复制最新凭证')">复制全部</button>
+        <button class="btn btn-ink" onclick="downloadExport()">下载 .txt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Scheduler & Logs -->
+  <div class="mask" id="schedulerModal" onclick="maskClose(event, 'schedulerModal')">
+    <div class="dialog wide">
+      <div class="dialog-head">
+        <span>自动保活策略 & 刷新日志</span>
+        <button class="icon-btn" onclick="closeModal('schedulerModal')">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div class="note-box">
+          每个邮箱按<strong>各自的导入时间 / 上次刷新时间</strong>独立计时，满设定天数后自动请求微软换取新凭证并<strong>覆盖保存新的 <code>refresh_token</code></strong>。
+        </div>
+        <div class="row-2" style="margin-bottom:14px;">
+          <div class="field" style="margin:0;">
+            <label>后台自动保活</label>
+            <select class="input" id="schedEnabled">
+              <option value="1">已启用（推荐）</option>
+              <option value="0">已暂停</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label>刷新周期（天，建议 45 天）</label>
+            <input class="input" type="number" id="schedDays" min="1" max="89" />
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:12px; color:var(--text-muted);" id="schedInfo">最近刷新日志</span>
+          <button class="btn btn-ink btn-sm" onclick="saveScheduler()">保存策略</button>
+        </div>
+        <div class="log-list" id="logList"></div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" onclick="closeModal('schedulerModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Modal: Change Admin Account / Password -->
+  <div class="mask" id="securityModal" onclick="maskClose(event, 'securityModal')">
+    <div class="dialog">
+      <div class="dialog-head">
+        <span>修改登录账号与密码</span>
+        <button class="icon-btn" onclick="closeModal('securityModal')">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div class="note-box">
+          登录凭证与所有邮箱数据均持久保存在服务器 <code>data/db.json</code> 中，手机/电脑等多设备登录同一账号即可实时同步。
+        </div>
+        <div class="field">
+          <label>当前密码</label>
+          <input class="input" type="password" id="secCurPass" placeholder="请输入当前密码" />
+        </div>
+        <div class="field">
+          <label>登录账号</label>
+          <input class="input" id="secNewUser" placeholder="admin" />
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>新密码（不改密码可留空）</label>
+          <input class="input" type="password" id="secNewPass" placeholder="至少 4 位字符" />
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" onclick="closeModal('securityModal')">取消</button>
+        <button class="btn btn-ink" onclick="submitSecurityChange()">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-screen Auth Overlay (Setup or Login) -->
+  <div class="auth-overlay" id="authOverlay">
+    <form class="auth-card" onsubmit="submitAuth(event)">
+      <div class="auth-logo">
+        <div class="brand-mark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="2" y="4" width="20" height="16" rx="3"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+        </div>
+        <span class="brand-name">Outlook Hub</span>
+      </div>
+      <h2 class="auth-title" id="authTitle">登录控制台</h2>
+      <p class="auth-sub" id="authSub">输入服务器管理员账号密码，多设备实时同步你的邮箱与最新凭证。</p>
+      <div class="auth-err" id="authErr"></div>
+      <div class="field">
+        <label>账号</label>
+        <input class="input" id="authUser" autocomplete="username" placeholder="例如：admin" required />
+      </div>
+      <div class="field">
+        <label>密码</label>
+        <input class="input" type="password" id="authPass" autocomplete="current-password" placeholder="请输入密码" required />
+      </div>
+      <div class="field" id="authPassConfirmWrap" style="display:none;">
+        <label>确认密码</label>
+        <input class="input" type="password" id="authPassConfirm" autocomplete="new-password" placeholder="再次输入密码" />
+      </div>
+      <label id="authRememberWrap" style="display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text-secondary); margin-bottom:16px; cursor:pointer;">
+        <input type="checkbox" id="authRemember" checked />
+        30 天内免重复登录
+      </label>
+      <button type="submit" class="btn btn-ink" id="authSubmitBtn" style="width:100%; height:38px;">登录</button>
+    </form>
+  </div>
+
+  <script>
+    const GROUP_COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#06b6d4", "#64748b"];
+
+    let groups = [];
+    let accounts = [];
+    let activeGroupFilter = "all"; // 'all' | 'error' | '__ungrouped__' | groupId
+    let selectedEmail = null;
+    let currentFolder = "inbox";
+    let currentMessages = [];
+    let currentMailIdx = -1;
+    let readerMode = "html";
+    let currentOtp = null;
+
+    let editingGroupId = null;
+    let pickedColor = GROUP_COLORS[0];
+    let editingAccId = null;
+
+    // Theme init
+    (function initTheme() {
+      const saved = localStorage.getItem("outlook_hub_theme") || "light";
+      document.documentElement.setAttribute("data-theme", saved);
+      updateThemeLabel(saved);
+    })();
+
+    function updateThemeLabel(theme) {
+      const el = document.getElementById("themeLabel");
+      if (el) el.textContent = theme === "dark" ? "切换浅色模式" : "切换深色模式";
+    }
+
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute("data-theme") || "light";
+      const next = cur === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("outlook_hub_theme", next);
+      updateThemeLabel(next);
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.style.display = "block";
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => { el.style.display = "none"; }, 2600);
+    }
+
+    async function copyText(text, msg = "已复制") {
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(msg);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast(msg);
+      }
+    }
+
+    function esc(s) {
+      return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function fmtTime(iso, short = false) {
+      if (!iso) return "-";
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      if (short) {
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mi = String(d.getMinutes()).padStart(2, "0");
+        return `${mm}-${dd} ${hh}:${mi}`;
+      }
+      return d.toLocaleString("zh-CN", { hour12: false });
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("open"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+    function maskClose(e, id) { if (e.target.id === id) closeModal(id); }
+
+    async function refreshAllData() {
+      const [gRes, aRes, sRes] = await Promise.all([
+        fetch("/api/groups").then((r) => r.json()),
+        fetch("/api/accounts").then((r) => r.json()),
+        fetch("/api/scheduler").then((r) => r.json()),
+      ]);
+      groups = gRes.groups || [];
+      accounts = aRes.accounts || [];
+
+      document.getElementById("cnt-all").textContent = accounts.length;
+      document.getElementById("cnt-error").textContent = accounts.filter((a) => a.status === "error").length;
+      document.getElementById("cnt-ungrouped").textContent = accounts.filter((a) => !a.groupId).length;
+
+      const s = sRes.scheduler;
+      document.getElementById("railSchedLabel").textContent = s.enabled
+        ? `自动保活 · ${s.intervalDays}天`
+        : "自动保活 · 已暂停";
+
+      renderGroupNav();
+      renderAccounts();
+
+      if (!selectedEmail && accounts.length > 0) {
+        selectAccount(accounts[0].email);
+      } else if (selectedEmail && !accounts.some((a) => a.email === selectedEmail)) {
+        selectedEmail = accounts[0] ? accounts[0].email : null;
+        if (selectedEmail) selectAccount(selectedEmail);
+      }
+    }
+
+    function renderGroupNav() {
+      ["all", "error", "ungrouped"].forEach((k) => {
+        const key = k === "ungrouped" ? "__ungrouped__" : k;
+        document.getElementById("nav-" + k).classList.toggle("active", activeGroupFilter === key);
+      });
+
+      const listEl = document.getElementById("groupNavList");
+      if (!groups.length) {
+        listEl.innerHTML = `<div style="padding:6px 10px; font-size:12px; color:var(--text-muted);">点击右上角 + 创建项目分组</div>`;
+        return;
+      }
+
+      listEl.innerHTML = groups.map((g) => `
+        <div class="nav-item ${activeGroupFilter === g.id ? "active" : ""}" onclick="selectGroupFilter('${g.id}')">
+          <span class="group-dot" style="background:${esc(g.color)}"></span>
+          <span class="nav-label">${esc(g.name)}</span>
+          <span class="nav-count hide-on-hover">${g.count}</span>
+          <div class="nav-hover-acts" onclick="event.stopPropagation()">
+            <button class="mini-act" title="重命名/改色" onclick="openGroupModal('${g.id}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            </button>
+            <button class="mini-act" title="删除分组" onclick="deleteGroup('${g.id}', '${esc(g.name)}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function selectGroupFilter(filterKey) {
+      activeGroupFilter = filterKey;
+      renderGroupNav();
+      renderAccounts();
+    }
+
+    function getCurrentGroupLabel() {
+      if (activeGroupFilter === "all") return "全部邮箱";
+      if (activeGroupFilter === "error") return "异常令牌";
+      if (activeGroupFilter === "__ungrouped__") return "未分组";
+      const g = groups.find((x) => x.id === activeGroupFilter);
+      return g ? g.name : "全部邮箱";
+    }
+
+    function renderAccounts() {
+      document.getElementById("currentGroupTitle").textContent = getCurrentGroupLabel();
+      const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+
+      const filtered = accounts.filter((a) => {
+        if (activeGroupFilter === "error" && a.status !== "error") return false;
+        if (activeGroupFilter === "__ungrouped__" && a.groupId) return false;
+        if (
+          activeGroupFilter !== "all" &&
+          activeGroupFilter !== "error" &&
+          activeGroupFilter !== "__ungrouped__" &&
+          a.groupId !== activeGroupFilter
+        ) return false;
+
+        if (q) {
+          const hay = `${a.email} ${a.note || ""} ${a.groupName || ""}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById("shownAccCount").textContent = filtered.length;
+      const wrap = document.getElementById("accountList");
+
+      if (!filtered.length) {
+        wrap.innerHTML = `<div class="empty">${accounts.length ? "当前分组暂无匹配邮箱" : "点击左上角「导入邮箱」添加账号"}</div>`;
+        return;
+      }
+
+      wrap.innerHTML = filtered.map((a) => {
+        const d = a.daysRemaining;
+        let dCls = "";
+        let dTxt = d === null ? "-" : `${d}天`;
+        if (a.status === "error") { dCls = "err"; dTxt = "异常"; }
+        else if (d !== null && d <= 5) { dCls = "warn"; }
+
+        return `
+          <div class="acc-row ${a.email === selectedEmail ? "active" : ""}" onclick="selectAccount('${a.email.replace(/'/g, "\\'")}')">
+            <div class="acc-line1">
+              <span class="dot-status ${a.status}"></span>
+              <span class="acc-email" title="${esc(a.email)}">${esc(a.email)}</span>
+              <span class="days-tag ${dCls}" title="导入: ${fmtTime(a.importedAt)}&#10;下次自动刷新: ${fmtTime(a.nextRefreshAt)}">${dTxt}</span>
+            </div>
+            <div class="acc-line2">
+              <div class="acc-tags">
+                ${a.groupName
+                  ? `<span class="group-tag"><span class="group-dot" style="background:${esc(a.groupColor || "#3b82f6")}; width:6px; height:6px;"></span>${esc(a.groupName)}</span>`
+                  : `<span class="note-text">未分组</span>`}
+                ${a.note ? `<span class="note-text" title="${esc(a.note)}">· ${esc(a.note)}</span>` : ""}
+              </div>
+              <div class="acc-quick" onclick="event.stopPropagation()">
+                <button class="icon-btn" title="标注分组与备注" onclick="openEditAccModal('${a.id}')">
+                  <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                </button>
+                <button class="icon-btn" title="复制最新凭证" onclick="copyCredential('${a.id}')">
+                  <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+                <button class="icon-btn" title="立即刷新令牌" onclick="refreshOne('${a.id}')">
+                  <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </button>
+                <button class="icon-btn danger" title="删除账号" onclick="deleteAcc('${a.id}')">
+                  <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function copyCredential(id) {
+      const acc = accounts.find((a) => a.id === id);
+      if (acc) copyText(acc.credentialLine, `已复制 ${acc.email} 的最新凭证`);
+    }
+
+    function closeMailDetail() {
+      currentMailIdx = -1;
+      document.getElementById("mailDetailView").style.display = "none";
+      document.getElementById("mailListView").style.display = "flex";
+    }
+
+    function stepMail(delta) {
+      const next = currentMailIdx + delta;
+      if (next >= 0 && next < currentMessages.length) {
+        openMail(next);
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const anyModal = document.querySelector(".mask.open");
+        if (anyModal) {
+          anyModal.classList.remove("open");
+        } else if (currentMailIdx >= 0) {
+          closeMailDetail();
+        }
+      }
+    });
+
+    function selectAccount(email) {
+      selectedEmail = email;
+      document.getElementById("mailAccTitle").textContent = email;
+      closeMailDetail();
+      renderAccounts();
+      fetchCurrentMail();
+    }
+
+    function switchFolder(folder) {
+      currentFolder = folder;
+      ["inbox", "junk", "all"].forEach((f) => {
+        document.getElementById("tab-" + f).classList.toggle("active", f === folder);
+      });
+      closeMailDetail();
+      if (selectedEmail) fetchCurrentMail();
+    }
+
+    async function fetchCurrentMail() {
+      if (!selectedEmail) return;
+      closeMailDetail();
+      const listEl = document.getElementById("mailList");
+      const btn = document.getElementById("fetchBtn");
+      const icon = document.getElementById("fetchIcon");
+      btn.disabled = true;
+      icon.classList.add("spin");
+      listEl.innerHTML = '<div class="empty">正在拉取邮件...</div>';
+
+      try {
+        const r = await fetch(`/api/mail/list?email=${encodeURIComponent(selectedEmail)}&folder=${currentFolder}&limit=25`);
+        const data = await r.json();
+        if (!data.ok) {
+          listEl.innerHTML = `<div class="empty" style="color:var(--danger);">取件失败: ${esc(data.error)}</div>`;
+          return;
+        }
+        currentMessages = data.messages || [];
+        currentMailIdx = -1;
+        renderMailList();
+      } catch (err) {
+        listEl.innerHTML = `<div class="empty" style="color:var(--danger);">网络错误: ${esc(err.message)}</div>`;
+      } finally {
+        btn.disabled = false;
+        icon.classList.remove("spin");
+      }
+    }
+
+    function renderMailList() {
+      const listEl = document.getElementById("mailList");
+      if (!currentMessages.length) {
+        listEl.innerHTML = '<div class="empty">当前文件夹暂无邮件</div>';
+        return;
+      }
+      listEl.innerHTML = currentMessages.map((m, i) => `
+        <div class="mail-row" id="mail-${i}" onclick="openMail(${i})">
+          <div class="mail-row-avatar">${esc((m.from || "M").trim()[0] || "M")}</div>
+          <div class="mail-row-main">
+            <div class="mail-r1">
+              <span class="mail-sender">${esc(m.from)}</span>
+              <span class="mail-time">${fmtTime(m.date, true)}</span>
+            </div>
+            <div class="mail-r2">
+              <span class="mail-subj">${esc(m.subject)}</span>
+              ${m.code ? `<span class="otp-pill" title="点击复制验证码" onclick="event.stopPropagation(); copyText('${esc(m.code)}', '验证码已复制: ${esc(m.code)}')">${esc(m.code)}</span>` : ""}
+            </div>
+            <div class="mail-snip">${esc(m.preview || "")}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function setReaderMode(mode) {
+      readerMode = mode;
+      document.getElementById("mode-html").classList.toggle("active", mode === "html");
+      document.getElementById("mode-text").classList.toggle("active", mode === "text");
+      if (currentMailIdx >= 0) renderMailBody(currentMessages[currentMailIdx]);
+    }
+
+    function openMail(idx) {
+      const m = currentMessages[idx];
+      if (!m) return;
+      currentMailIdx = idx;
+      document.getElementById("mailListView").style.display = "none";
+      document.getElementById("mailDetailView").style.display = "flex";
+      document.getElementById("detailPosition").textContent = `第 ${idx + 1} / ${currentMessages.length} 封`;
+      document.getElementById("prevMailBtn").disabled = idx <= 0;
+      document.getElementById("nextMailBtn").disabled = idx >= currentMessages.length - 1;
+      document.getElementById("rSubject").textContent = m.subject;
+      document.getElementById("rFrom").textContent = m.from;
+      document.getElementById("rAvatar").textContent = (m.from || "M").trim()[0] || "M";
+      document.getElementById("rDate").textContent = fmtTime(m.date);
+      document.getElementById("rProto").textContent = m.protocol;
+
+      currentOtp = m.code || null;
+      const card = document.getElementById("rOtpCard");
+      if (currentOtp) {
+        card.style.display = "flex";
+        document.getElementById("rOtpCode").textContent = currentOtp;
+      } else {
+        card.style.display = "none";
+      }
+
+      renderMailBody(m);
+    }
+
+    function renderMailBody(m) {
+      const body = document.getElementById("rBody");
+      if (readerMode === "html" && m.html) {
+        const card = document.createElement("div");
+        card.className = "iframe-card";
+        const iframe = document.createElement("iframe");
+        iframe.setAttribute("sandbox", "allow-same-origin");
+        iframe.srcdoc = m.html;
+        card.appendChild(iframe);
+        body.innerHTML = "";
+        body.appendChild(card);
+      } else {
+        body.innerHTML = `<div class="plain-card">${esc(m.text || "(空正文)")}</div>`;
+      }
+    }
+
+    // --- Group CRUD ---
+    function renderSwatches() {
+      document.getElementById("swatchRow").innerHTML = GROUP_COLORS.map((c) => `
+        <div class="swatch ${c === pickedColor ? "active" : ""}" style="background:${c}" onclick="pickedColor='${c}'; renderSwatches();"></div>
+      `).join("");
+    }
+
+    function openGroupModal(groupId = null) {
+      editingGroupId = groupId;
+      const g = groupId ? groups.find((x) => x.id === groupId) : null;
+      document.getElementById("groupModalTitle").textContent = g ? "编辑项目分组" : "新建项目分组";
+      document.getElementById("groupNameInput").value = g ? g.name : "";
+      pickedColor = g ? g.color : GROUP_COLORS[groups.length % GROUP_COLORS.length];
+      renderSwatches();
+      openModal("groupModal");
+      setTimeout(() => document.getElementById("groupNameInput").focus(), 50);
+    }
+
+    async function saveGroup() {
+      const name = document.getElementById("groupNameInput").value.trim();
+      if (!name) return showToast("请输入分组名称");
+      const url = editingGroupId ? `/api/groups/${editingGroupId}` : "/api/groups";
+      const method = editingGroupId ? "PUT" : "POST";
+      const r = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, color: pickedColor }),
+      });
+      const data = await r.json();
+      if (!data.ok) return showToast(data.error || "保存失败");
+      closeModal("groupModal");
+      showToast(editingGroupId ? "分组已更新" : "已新建项目分组: " + name);
+      await refreshAllData();
+    }
+
+    async function deleteGroup(id, name) {
+      if (!confirm(`确定删除分组「${name}」吗？\n分组内的邮箱不会被删除，会自动移回「未分组」。`)) return;
+      await fetch(`/api/groups/${id}`, { method: "DELETE" });
+      if (activeGroupFilter === id) activeGroupFilter = "all";
+      showToast("分组已删除");
+      await refreshAllData();
+    }
+
+    // --- Edit Account Group & Note ---
+    function fillGroupSelect(selectId, selectedVal = "", includeAll = false) {
+      const el = document.getElementById(selectId);
+      let opts = "";
+      if (includeAll) opts += `<option value="">全部邮箱 (${accounts.length})</option>`;
+      opts += `<option value="${includeAll ? "__ungrouped__" : ""}">未分组</option>`;
+      for (const g of groups) {
+        opts += `<option value="${g.id}">${esc(g.name)} (${g.count})</option>`;
+      }
+      el.innerHTML = opts;
+      el.value = selectedVal || "";
+    }
+
+    function openEditAccModal(accId) {
+      const acc = accounts.find((a) => a.id === accId);
+      if (!acc) return;
+      editingAccId = acc.id;
+      document.getElementById("editAccEmail").textContent = acc.email;
+      fillGroupSelect("editAccGroup", acc.groupId || "", false);
+      document.getElementById("editAccNote").value = acc.note || "";
+      openModal("editAccModal");
+    }
+
+    async function saveAccountMeta() {
+      if (!editingAccId) return;
+      const groupId = document.getElementById("editAccGroup").value || null;
+      const note = document.getElementById("editAccNote").value.trim();
+      const r = await fetch(`/api/accounts/${editingAccId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ groupId, note }),
+      });
+      const data = await r.json();
+      if (!data.ok) return showToast(data.error || "保存失败");
+      closeModal("editAccModal");
+      showToast("已更新项目分组与备注");
+      await refreshAllData();
+    }
+
+    // --- Import ---
+    function openImportModal() {
+      const defaultGroup =
+        activeGroupFilter !== "all" && activeGroupFilter !== "error" && activeGroupFilter !== "__ungrouped__"
+          ? activeGroupFilter
+          : "";
+      fillGroupSelect("importGroup", defaultGroup, false);
+      document.getElementById("importNote").value = "";
+      openModal("importModal");
+    }
+
+    function loadImportFile(e) {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById("importText").value = String(reader.result || "");
+        updateImportCount();
+      };
+      reader.readAsText(f, "utf-8");
+    }
+
+    function updateImportCount() {
+      const n = document.getElementById("importText").value
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.includes("----")).length;
+      document.getElementById("importCountHint").textContent = `待导入 ${n} 行`;
+    }
+
+    async function submitImport() {
+      const text = document.getElementById("importText").value.trim();
+      if (!text) return showToast("请先粘贴账号或选择文件");
+      const verify = document.getElementById("importVerify").checked;
+      const groupId = document.getElementById("importGroup").value || null;
+      const note = document.getElementById("importNote").value.trim();
+
+      const btn = document.getElementById("importSubmitBtn");
+      btn.disabled = true;
+      btn.textContent = "导入中...";
+      try {
+        const r = await fetch("/api/accounts/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, verify, groupId, note }),
+        });
+        const data = await r.json();
+        if (!data.ok) return showToast("导入失败: " + data.error);
+        document.getElementById("importText").value = "";
+        updateImportCount();
+        closeModal("importModal");
+        showToast(`导入成功：新增 ${data.added}，更新 ${data.updated}`);
+        await refreshAllData();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "确认导入";
+      }
+    }
+
+    // --- Export ---
+    function openExportModal() {
+      const defaultGroup =
+        activeGroupFilter !== "all" && activeGroupFilter !== "error" ? activeGroupFilter : "";
+      fillGroupSelect("exportGroup", defaultGroup, true);
+      openModal("exportModal");
+      loadExportPreview();
+    }
+
+    async function loadExportPreview() {
+      const gid = document.getElementById("exportGroup").value;
+      const q = gid ? `?groupId=${encodeURIComponent(gid)}` : "";
+      const r = await fetch(`/api/accounts/export${q}`);
+      const data = await r.json();
+      document.getElementById("exportPreview").value = data.text || "";
+    }
+
+    function downloadExport() {
+      const gid = document.getElementById("exportGroup").value;
+      const q = gid ? `&groupId=${encodeURIComponent(gid)}` : "";
+      window.location.href = `/api/accounts/export?download=1${q}`;
+      showToast("已开始下载最新凭证文件");
+    }
+
+    // --- Refresh & Delete ---
+    async function refreshOne(id) {
+      showToast("正在刷新并覆盖最新令牌...");
+      const r = await fetch("/api/tokens/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await r.json();
+      showToast(data.ok ? (data.rotated ? "刷新成功，已覆盖保存新令牌" : "刷新成功") : "刷新失败: " + data.error);
+      await refreshAllData();
+    }
+
+    async function refreshAllTokens() {
+      showToast("正在批量刷新全部令牌...");
+      const r = await fetch("/api/tokens/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+      const data = await r.json();
+      const s = data.summary;
+      showToast(s.skipped ? s.reason : `刷新完成：成功 ${s.succeeded}/${s.total}，轮换 ${s.rotated} 个`);
+      await refreshAllData();
+    }
+
+    async function deleteAcc(id) {
+      if (!confirm("确定删除该邮箱账号？")) return;
+      await fetch(`/api/accounts/${encodeURIComponent(id)}`, { method: "DELETE" });
+      showToast("账号已删除");
+      await refreshAllData();
+    }
+
+    // --- Scheduler ---
+    async function openSchedulerModal() {
+      openModal("schedulerModal");
+      const [sRes, lRes] = await Promise.all([
+        fetch("/api/scheduler").then((r) => r.json()),
+        fetch("/api/logs?limit=60").then((r) => r.json()),
+      ]);
+      const s = sRes.scheduler;
+      document.getElementById("schedEnabled").value = s.enabled ? "1" : "0";
+      document.getElementById("schedDays").value = s.intervalDays || 45;
+      document.getElementById("schedInfo").textContent =
+        `最早到期: ${fmtTime(s.nextEarliestRefreshAt)} ｜ 上次巡检: ${fmtTime(s.lastCheckAt, true)}`;
+
+      const logs = lRes.logs || [];
+      document.getElementById("logList").innerHTML = logs.length
+        ? logs.map((l) => `
+            <div class="log-item">
+              <div>
+                <strong>${esc(l.email)}</strong>
+                <span style="color:var(--text-muted); margin-left:6px;">[${esc(l.trigger)}]</span>
+                <div style="margin-top:3px; color:${l.success ? "var(--success)" : "var(--danger)"};">${esc(l.message)}</div>
+              </div>
+              <div style="color:var(--text-muted); white-space:nowrap;">${fmtTime(l.timestamp, true)}</div>
+            </div>
+          `).join("")
+        : '<div class="empty" style="padding:20px;">暂无刷新日志</div>';
+    }
+
+    async function saveScheduler() {
+      const enabled = document.getElementById("schedEnabled").value === "1";
+      const intervalDays = Number(document.getElementById("schedDays").value) || 45;
+      await fetch("/api/scheduler", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled, intervalDays }),
+      });
+      closeModal("schedulerModal");
+      showToast(`已保存：按导入时间每 ${intervalDays} 天自动刷新覆盖`);
+      await refreshAllData();
+    }
+
+    // --- Auth & Multi-device Session ---
+    let authInitialized = true;
+    let currentAdminUser = "";
+
+    function showAuthOverlay(initialized) {
+      authInitialized = Boolean(initialized);
+      document.getElementById("authErr").style.display = "none";
+      document.getElementById("authPass").value = "";
+      document.getElementById("authPassConfirm").value = "";
+
+      if (authInitialized) {
+        document.getElementById("authTitle").textContent = "登录 Outlook Hub";
+        document.getElementById("authSub").textContent = "输入管理员账号密码，多设备实时同步你的邮箱与 45 天自动保活凭证。";
+        document.getElementById("authPassConfirmWrap").style.display = "none";
+        document.getElementById("authRememberWrap").style.display = "flex";
+        document.getElementById("authSubmitBtn").textContent = "登录";
+      } else {
+        document.getElementById("authTitle").textContent = "初始化管理员账号";
+        document.getElementById("authSub").textContent = "首次部署请设置一个登录账号和密码（将持久保存到服务器，多设备通用）。";
+        document.getElementById("authUser").value = "admin";
+        document.getElementById("authPassConfirmWrap").style.display = "block";
+        document.getElementById("authRememberWrap").style.display = "none";
+        document.getElementById("authSubmitBtn").textContent = "完成初始化并进入";
+      }
+      document.getElementById("authOverlay").classList.add("open");
+      setTimeout(() => document.getElementById(authInitialized ? "authUser" : "authPass").focus(), 60);
+    }
+
+    async function submitAuth(e) {
+      e.preventDefault();
+      const errEl = document.getElementById("authErr");
+      errEl.style.display = "none";
+
+      const username = document.getElementById("authUser").value.trim();
+      const password = document.getElementById("authPass").value;
+      const btn = document.getElementById("authSubmitBtn");
+
+      if (!authInitialized) {
+        const confirmPass = document.getElementById("authPassConfirm").value;
+        if (password !== confirmPass) {
+          errEl.textContent = "两次输入的密码不一致";
+          errEl.style.display = "block";
+          return;
+        }
+      }
+
+      btn.disabled = true;
+      try {
+        const endpoint = authInitialized ? "/api/auth/login" : "/api/auth/setup";
+        const remember = document.getElementById("authRemember").checked;
+        const r = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, remember }),
+        });
+        const data = await r.json();
+        if (!data.ok) {
+          errEl.textContent = data.error || "认证失败";
+          errEl.style.display = "block";
+          return;
+        }
+        currentAdminUser = data.username || username;
+        document.getElementById("adminUserLabel").textContent = `账号安全 (${currentAdminUser})`;
+        document.getElementById("authOverlay").classList.remove("open");
+        showToast(authInitialized ? "登录成功" : "管理员账号初始化完成");
+        await refreshAllData();
+      } catch (err) {
+        errEl.textContent = "网络错误: " + err.message;
+        errEl.style.display = "block";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function openAccountSecurityModal() {
+      document.getElementById("secCurPass").value = "";
+      document.getElementById("secNewUser").value = currentAdminUser || "admin";
+      document.getElementById("secNewPass").value = "";
+      openModal("securityModal");
+    }
+
+    async function submitSecurityChange() {
+      const currentPassword = document.getElementById("secCurPass").value;
+      const newUsername = document.getElementById("secNewUser").value.trim();
+      const newPassword = document.getElementById("secNewPass").value;
+      if (!currentPassword) return showToast("请输入当前密码");
+      const r = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newUsername, newPassword }),
+      });
+      const data = await r.json();
+      if (!data.ok) return showToast(data.error || "修改失败");
+      currentAdminUser = data.username;
+      document.getElementById("adminUserLabel").textContent = `账号安全 (${currentAdminUser})`;
+      closeModal("securityModal");
+      showToast("登录账号密码已更新");
+    }
+
+    async function logout() {
+      await fetch("/api/auth/logout", { method: "POST" });
+      accounts = [];
+      groups = [];
+      selectedEmail = null;
+      showAuthOverlay(true);
+    }
+
+    async function bootstrapApp() {
+      try {
+        const r = await fetch("/api/auth/status");
+        const data = await r.json();
+        if (!data.authenticated) {
+          showAuthOverlay(data.initialized);
+          return;
+        }
+        currentAdminUser = data.username || "";
+        document.getElementById("adminUserLabel").textContent = `账号安全 (${currentAdminUser})`;
+        await refreshAllData();
+      } catch (err) {
+        showToast("无法连接服务器: " + err.message);
+      }
+    }
+
+    bootstrapApp();
+  </script>
+</body>
+</html>

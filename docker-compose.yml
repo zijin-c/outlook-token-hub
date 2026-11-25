@@ -1,0 +1,17 @@
+services:
+  outlook-token-hub:
+    build: .
+    container_name: outlook-token-hub
+    restart: unless-stopped
+    ports:
+      - "3456:3456"
+    environment:
+      - PORT=3456
+      - TZ=Asia/Shanghai
+      # 可选：通过环境变量预设管理员账号密码（不填则首次打开网页时自助设置）
+      # - ADMIN_USER=admin
+      # - ADMIN_PASSWORD=your_strong_password_here
+      # 可选：供外部脚本调用 API 的 Bearer Token
+      # - API_KEY=your_api_key_here
+    volumes:
+      - ./data:/app/data

@@ -1,0 +1,14 @@
+{
+  "name": "outlook-token-hub",
+  "version": "1.0.0",
+  "description": "Outlook/Hotmail OAuth2 direct mail fetcher & automatic refresh_token keep-alive hub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "imapflow": "^1.0.180",
+    "mailparser": "^3.7.2"
+  }
+}
