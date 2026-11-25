@@ -4,9 +4,9 @@ services:
     container_name: outlook-token-hub
     restart: unless-stopped
     ports:
-      - "3456:3456"
+      - "18742:18742"
     environment:
-      - PORT=3456
+      - PORT=18742
       - TZ=Asia/Shanghai
       # 可选：通过环境变量预设管理员账号密码（不填则首次打开网页时自助设置）
       # - ADMIN_USER=admin

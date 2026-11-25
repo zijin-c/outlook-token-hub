@@ -12,9 +12,9 @@ COPY public ./public
 RUN mkdir -p /app/data
 
 ENV NODE_ENV=production
-ENV PORT=3456
+ENV PORT=18742
 
-EXPOSE 3456
+EXPOSE 18742
 
 VOLUME ["/app/data"]
 

@@ -6,7 +6,7 @@ const oauth = require("./src/oauth");
 const mail = require("./src/mail");
 const scheduler = require("./src/scheduler");
 
-const PORT = Number(process.env.PORT) || 3456;
+const PORT = Number(process.env.PORT) || 18742;
 const app = express();
 
 app.use(express.json({ limit: "4mb" }));

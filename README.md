@@ -31,13 +31,13 @@ cd outlook-token-hub
 docker compose up -d --build
 ```
 
-启动后访问 `http://你的服务器IP:3456`，首次打开网页即可设置管理员账号密码。
+启动后访问 `http://你的服务器IP:18742`，首次打开网页即可设置管理员账号密码。
 
 如需通过环境变量预设管理员账号密码，可编辑 `docker-compose.yml`：
 
 ```yaml
 environment:
-  - PORT=3456
+  - PORT=18742
   - TZ=Asia/Shanghai
   - ADMIN_USER=admin
   - ADMIN_PASSWORD=你的强密码
@@ -52,4 +52,4 @@ npm install
 npm start
 ```
 
-访问 `http://localhost:3456`。
+访问 `http://localhost:18742`。
