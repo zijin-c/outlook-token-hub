@@ -67,7 +67,8 @@
       background: var(--bg);
       color: var(--text);
       display: grid;
-      grid-template-columns: 232px 300px 1fr;
+      grid-template-columns: clamp(188px, 17vw, 232px) clamp(240px, 23vw, 300px) minmax(0, 1fr);
+      width: 100%;
       overflow: hidden;
       font-size: 13.5px;
       -webkit-font-smoothing: antialiased;
@@ -412,6 +413,9 @@
       display: flex;
       flex-direction: column;
       min-height: 0;
+      min-width: 0;
+      width: 100%;
+      overflow: hidden;
       background: var(--bg);
     }
     .mail-view {
@@ -419,24 +423,31 @@
       flex-direction: column;
       height: 100%;
       min-height: 0;
+      min-width: 0;
+      width: 100%;
+      overflow: hidden;
     }
     .mail-head {
-      padding: 14px 24px 0;
+      padding: 14px 20px 0;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
+      min-width: 0;
       background: var(--surface);
     }
     .mail-head-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 8px;
+      min-width: 0;
     }
+    #fetchBtn { flex-shrink: 0; }
     .mail-account-title {
       font-size: 14px;
       font-weight: 700;
       color: var(--text);
+      min-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -466,13 +477,15 @@
     }
 
     .mail-row {
-      padding: 14px 24px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--border);
       cursor: pointer;
       transition: background 0.12s;
       display: flex;
       align-items: flex-start;
-      gap: 14px;
+      gap: 12px;
+      min-width: 0;
+      width: 100%;
     }
     .mail-row:hover { background: var(--hover); }
     .mail-row-avatar {
@@ -491,15 +504,18 @@
       text-transform: uppercase;
       margin-top: 2px;
     }
-    .mail-row-main { flex: 1; min-width: 0; }
+    .mail-row-main { flex: 1; min-width: 0; overflow: hidden; }
     .mail-r1 {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 3px;
+      min-width: 0;
     }
     .mail-sender {
+      flex: 1;
+      min-width: 0;
       font-size: 13.5px;
       font-weight: 600;
       color: var(--text);
@@ -511,6 +527,7 @@
       font-size: 11.5px;
       color: var(--text-muted);
       flex-shrink: 0;
+      white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
     .mail-r2 {
@@ -518,8 +535,11 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 4px;
+      min-width: 0;
     }
     .mail-subj {
+      flex: 1;
+      min-width: 0;
       font-size: 13.5px;
       font-weight: 500;
       color: var(--text);
