@@ -35,6 +35,40 @@ function extractVerificationCode(subject = "", text = "") {
   return null;
 }
 
+function extractActionLink(html = "", text = "") {
+  const candidates = [];
+  const rawHtml = String(html || "");
+
+  // Extract <a href="...">label</a>
+  const anchorRe = /<a\b[^>]*href=["'](https?:\/\/[^"'\s]+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = anchorRe.exec(rawHtml)) !== null) {
+    const url = m[1].replace(/&amp;/gi, "&");
+    const label = m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    candidates.push({ url, label });
+  }
+
+  // Fallback plain-text URLs
+  if (candidates.length === 0 && text) {
+    const urlRe = /https?:\/\/[^\s<>"')]+/gi;
+    while ((m = urlRe.exec(String(text))) !== null) {
+      candidates.push({ url: m[0], label: "" });
+    }
+  }
+
+  const badRe = /unsubscribe|privacy|terms|policy|support|help|twitter\.com|x\.com|linkedin\.com|youtube\.com|instagram\.com|facebook\.com|status\.|preferences|manage/i;
+  const goodUrlRe = /magic|login|signin|sign-in|verify|confirm|auth|token|activate|reset|callback|click|links\./i;
+  const goodLabelRe = /sign\s*in|log\s*in|verify|confirm|activate|continue|登录|验证|确认|立即/i;
+
+  for (const c of candidates) {
+    if (badRe.test(c.url) || badRe.test(c.label)) continue;
+    if (goodLabelRe.test(c.label) || goodUrlRe.test(c.url)) {
+      return c.url;
+    }
+  }
+  return null;
+}
+
 function stripHtml(html = "") {
   return String(html)
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -95,6 +129,7 @@ async function fetchViaOutlookRest(accessToken, folder = "inbox", limit = 20) {
       text: textBody,
       html: htmlBody,
       code: extractVerificationCode(subject, textBody || msg.BodyPreview || ""),
+      actionLink: extractActionLink(htmlBody, textBody),
       protocol: "outlook-rest",
     };
   });
@@ -147,6 +182,7 @@ async function fetchViaGraphApi(accessToken, folder = "inbox", limit = 20) {
       text: textBody,
       html: htmlBody,
       code: extractVerificationCode(subject, textBody || msg.bodyPreview || ""),
+      actionLink: extractActionLink(htmlBody, textBody),
       protocol: "graph-api",
     };
   });
@@ -202,6 +238,7 @@ async function fetchViaImap(email, accessToken, folder = "inbox", limit = 20) {
             text: textBody,
             html: htmlBody,
             code: extractVerificationCode(subject, textBody),
+            actionLink: extractActionLink(htmlBody, textBody),
             protocol: "imap-xoauth2",
           });
         }
